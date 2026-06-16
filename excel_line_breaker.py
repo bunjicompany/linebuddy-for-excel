@@ -32,9 +32,13 @@ configure_tcl_tk_paths()
 
 
 APP_NAME = "いつもの改行 for Excel"
-APP_VERSION = "20260615-020209"
-APP_BUILD_DATETIME = "2026-06-15 02:02:09 +09:00"
-CONFIG_PATH = Path(__file__).with_name("settings.json")
+APP_VERSION = "20260616-233310"
+APP_BUILD_DATETIME = "2026-06-16 23:33:10 +09:00"
+CONFIG_PATH = (
+    Path(sys.executable).resolve().parent
+    if getattr(sys, "frozen", False)
+    else Path(__file__).resolve().parent
+) / "settings.json"
 ULONG_PTR = ctypes.c_ulonglong if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_ulong
 
 WH_KEYBOARD_LL = 13
@@ -98,6 +102,7 @@ TPM_RETURNCMD = 0x0100
 GWLP_WNDPROC = -4
 STARTUP_RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 STARTUP_VALUE_NAME = "ItsumonoKaigyoForExcel"
+START_MINIMIZED_ARG = "--start-minimized"
 MUTEX_NAME = "Local\\ItsumonoKaigyoForExcel.SingleInstance"
 ERROR_ALREADY_EXISTS = 183
 MENU_STARTUP_ADD = 1001
@@ -785,13 +790,13 @@ def create_font(point_size, weight=FW_NORMAL):
 
 def startup_command():
     if getattr(sys, "frozen", False):
-        return f'"{sys.executable}"'
+        return f'"{sys.executable}" {START_MINIMIZED_ARG}'
 
     executable = Path(sys.executable)
     pythonw = executable.with_name("pythonw.exe")
     if pythonw.exists():
         executable = pythonw
-    return f'"{executable}" "{Path(__file__).resolve()}"'
+    return f'"{executable}" "{Path(__file__).resolve()}" {START_MINIMIZED_ARG}'
 
 
 def is_startup_registered():
@@ -1721,10 +1726,6 @@ class KeyboardHook:
         if config["excel_only"] and not is_excel_foreground():
             self._clear_inferred_editing()
             return False
-        if config["edit_only"]:
-            state, _reason = self.get_edit_state()
-            if state != EditState.CELL_EDITING:
-                return False
 
         trigger = TRIGGERS[config["trigger"]]
         if vk_code != trigger["key"]:
@@ -1735,17 +1736,46 @@ class KeyboardHook:
         if ctrl != trigger["ctrl"] or shift != trigger["shift"]:
             return False
 
+        if config["edit_only"] and not self._trigger_allows_conversion(config["trigger"]):
+            return False
+
         if config["trigger"] == "Enter" and is_ime_composing():
             return False
         if config["trigger"] == "Enter" and self.ime_confirm_pending:
             self.ime_confirm_pending = False
             return False
 
-        if self.recently_confirmed_not_editing():
+        if config["trigger"] == "Enter" and self.recently_confirmed_not_editing():
             self._clear_inferred_editing()
             return False
 
         return True
+
+    def _trigger_allows_conversion(self, trigger_name):
+        state, _reason = self.get_edit_state()
+        if trigger_name == "Shift + Enter":
+            if state == EditState.OBJECT_EDITING:
+                return False
+            if state in (EditState.CELL_EDITING, EditState.NOT_EDITING):
+                return True
+            selection_is_range = is_excel_selection_range()
+            if selection_is_range is True:
+                self.update_selection_context(selection_is_range)
+                return True
+            if selection_is_range is False:
+                self.update_selection_context(selection_is_range)
+                return False
+            if selection_is_range == "busy":
+                return True
+            cached_selection_is_range = self.cached_selection_is_range()
+            if cached_selection_is_range is True:
+                return True
+            if cached_selection_is_range is False:
+                return False
+            hwnd, _thread_id, _pid = foreground_window_info()
+            return is_excel_foreground() and not excel_ui_is_textbox_context(hwnd)
+
+        return state == EditState.CELL_EDITING
 
     def refresh_non_editing_guard(self):
         selection_is_range = is_excel_selection_range()
@@ -2010,7 +2040,8 @@ class TrayIcon:
 class App:
     CLASS_NAME = "ItsumonoKaigyoForExcelWindow"
 
-    def __init__(self):
+    def __init__(self, start_minimized=False):
+        self.start_minimized = start_minimized
         self.config_data = load_config()
         self.language = self.config_data["language"]
         self.paused = False
@@ -2059,7 +2090,7 @@ class App:
             kernel32.GetModuleHandleW(None),
             None,
         )
-        user32.ShowWindow(self.hwnd, SW_SHOWNORMAL)
+        user32.ShowWindow(self.hwnd, SW_HIDE if self.start_minimized else SW_SHOWNORMAL)
         user32.UpdateWindow(self.hwnd)
 
     def _create_control(self, class_name, text, style, x, y, w, h, control_id=0):
@@ -2305,7 +2336,7 @@ def main():
         return 0
 
     try:
-        app = App()
+        app = App(start_minimized=START_MINIMIZED_ARG in sys.argv[1:])
         app.run()
         return 0
     finally:
