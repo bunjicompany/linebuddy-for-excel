@@ -4,7 +4,7 @@ Excelのセル内で、`Alt + Enter` の代わりに `Enter` または `Shift + 
 
 英語UIでは **LineBuddy for Excel** という名前で表示します。
 
-![いつもの改行 for Excel の動作イメージ](assets/demo.svg)
+![いつもの改行 for Excel の画面](assets/screenshot.png)
 
 ## ダウンロード
 
