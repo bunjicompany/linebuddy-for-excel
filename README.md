@@ -4,6 +4,24 @@ Excelのセル内で、`Alt + Enter` の代わりに `Enter` または `Shift + 
 
 英語UIでは **LineBuddy for Excel** という名前で表示します。
 
+## ダウンロード
+
+一般ユーザー向けの説明・最新版ダウンロードはこちらです。
+
+https://bunjicompany.com/downloads/ItsumonoKaigyoForExcel/
+
+過去バージョン・更新履歴はこちらです。
+
+https://github.com/bunjicompany/linebuddy-for-excel/releases
+
+## 安心して使うために
+
+このアプリは、入力した文章・パスワード・クリップボードの内容を読み取りません。
+キー操作を変換するために必要な範囲で、現在のウィンドウ状態とキー入力イベントを判定します。
+外部サーバーへの送信は行いません。
+
+個人開発アプリのため、Windows SmartScreenの警告が表示される場合があります。
+
 ## 主な特徴
 
 - `Enter` または `Shift + Enter` をセル内改行キーとして選択できます。
@@ -26,7 +44,7 @@ Excelのバージョンや更新状況によって、セル編集中の判定方
 
 ## 使い方
 
-1. [公式配布ページ](https://bunjicompany.com/downloads/ItsumonoKaigyoForExcel/) または [GitHub Releases](https://github.com/bunjicompany/linebuddy-for-excel/releases) から `ItsumonoKaigyoForExcel.exe` をダウンロードして起動します。
+1. [公式配布ページ](https://bunjicompany.com/downloads/ItsumonoKaigyoForExcel/) から `ItsumonoKaigyoForExcel.exe` をダウンロードして起動します。
 2. 必要に応じて、セル内改行キーを `Enter` または `Shift + Enter` から選びます。選んだキーと言語は次回起動時にも復元されます。
 3. Excelのセル内で文字入力中に、選択したキーを押します。
 4. 選択したキーが `Alt + Enter` として送信され、セル内改行されます。
