@@ -32,13 +32,14 @@ configure_tcl_tk_paths()
 
 
 APP_NAME = "いつもの改行 for Excel"
-APP_VERSION = "20260621-153915"
-APP_BUILD_DATETIME = "2026-06-21 15:39:15 +09:00"
-CONFIG_PATH = (
+APP_VERSION = "20260628-151908"
+APP_BUILD_DATETIME = "2026-06-28 15:19:08 +09:00"
+CONFIG_DIR = (
     Path(sys.executable).resolve().parent
     if getattr(sys, "frozen", False)
     else Path(__file__).resolve().parent
-) / "settings.json"
+)
+CONFIG_PATH = CONFIG_DIR / "ItsumonoKaigyoForExcel_settings.json"
 ULONG_PTR = ctypes.c_ulonglong if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_ulong
 
 WH_KEYBOARD_LL = 13
@@ -715,6 +716,12 @@ def save_config(config):
         json.dumps(config, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+
+def ensure_config_file():
+    config = load_config()
+    save_config(config)
+    return config
 
 
 def app_base_dir():
@@ -2064,7 +2071,7 @@ class App:
 
     def __init__(self, start_minimized=False):
         self.start_minimized = start_minimized
-        self.config_data = load_config()
+        self.config_data = ensure_config_file()
         self.language = self.config_data["language"]
         self.paused = False
         self.events = queue.Queue()
@@ -2346,7 +2353,7 @@ def main():
     if sys.platform != "win32":
         print("This app only runs on Windows.")
         return 1
-    startup_language = load_config()["language"]
+    startup_language = ensure_config_file()["language"]
     startup_app_name = text_for(startup_language, "app_name")
     mutex = kernel32.CreateMutexW(None, False, MUTEX_NAME)
     if not mutex:

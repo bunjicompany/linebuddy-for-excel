@@ -15,6 +15,7 @@ dist/
 
 # Local app settings
 settings.json
+ItsumonoKaigyoForExcel_settings.json
 
 # Editor / OS files
 .vscode/
