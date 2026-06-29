@@ -32,8 +32,7 @@ configure_tcl_tk_paths()
 
 
 APP_NAME = "いつもの改行 for Excel"
-APP_VERSION = "20260628-151908"
-APP_BUILD_DATETIME = "2026-06-28 15:19:08 +09:00"
+APP_VERSION = "v1.0.0"
 CONFIG_DIR = (
     Path(sys.executable).resolve().parent
     if getattr(sys, "frozen", False)
@@ -181,7 +180,7 @@ TEXTS = {
         "menu_about": "バージョン情報",
         "menu_exit": "終了",
         "about_title": "{app_name} - バージョン情報",
-        "about_body": "{app_name}\nDeveloped by ぶんじカンパニー\n\nバージョン: {version}\nビルド日時: {build_datetime}",
+        "about_body": "{app_name}\nDeveloped by ぶんじカンパニー\n\nバージョン: {version}",
         "error_hook_start": "キーボードフックの開始に失敗しました。",
         "error_send_break": "改行の送信に失敗しました。",
         "error_single_instance": "アプリの起動確認に失敗しました。",
@@ -211,7 +210,7 @@ TEXTS = {
         "menu_about": "About",
         "menu_exit": "Exit",
         "about_title": "{app_name} - About",
-        "about_body": "{app_name}\nDeveloped by Bunji Company\n\nVersion: {version}\nBuild date: {build_datetime}",
+        "about_body": "{app_name}\nDeveloped by Bunji Company\n\nVersion: {version}",
         "error_hook_start": "Failed to start the keyboard hook.",
         "error_send_break": "Failed to send the line break.",
         "error_single_instance": "Failed to check whether the app is already running.",
@@ -2057,7 +2056,6 @@ class TrayIcon:
                 self.app.t("about_body").format(
                     app_name=app_name,
                     version=APP_VERSION,
-                    build_datetime=APP_BUILD_DATETIME,
                 ),
                 self.app.t("about_title").format(app_name=app_name),
                 0,

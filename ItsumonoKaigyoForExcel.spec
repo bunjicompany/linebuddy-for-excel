@@ -1,24 +1,71 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import os
 import re
+import tempfile
 
 
 def update_build_version():
-    now = datetime.now(timezone(timedelta(hours=9)))
-    version = now.strftime("%Y%m%d-%H%M%S")
-    build_datetime = now.strftime("%Y-%m-%d %H:%M:%S +09:00")
     source_path = Path("excel_line_breaker.py")
-    source = source_path.read_text(encoding="utf-8")
-    source = re.sub(r'APP_VERSION = "[^"]+"', f'APP_VERSION = "{version}"', source, count=1)
-    source = re.sub(
-        r'APP_BUILD_DATETIME = "[^"]+"',
-        f'APP_BUILD_DATETIME = "{build_datetime}"',
-        source,
-        count=1,
+
+    original_bytes = source_path.read_bytes()
+    source = original_bytes.decode("utf-8")
+    match = re.search(r'APP_VERSION = "([^"]+)"', source)
+    if not match:
+        print("update_build_version: APP_VERSION marker not found; skipping source rewrite.")
+        return
+
+    current_version = match.group(1)
+    semver_match = re.fullmatch(r"v?(\d+)\.(\d+)\.(\d+)", current_version)
+    bump = os.environ.get("VERSION_BUMP", "patch").strip().lower()
+    if bump not in {"major", "minor", "patch", "none"}:
+        raise ValueError("VERSION_BUMP must be one of: major, minor, patch, none")
+
+    if not semver_match:
+        version = "v1.0.0"
+    else:
+        major, minor, patch = (int(item) for item in semver_match.groups())
+        if bump == "major":
+            major += 1
+            minor = 0
+            patch = 0
+        elif bump == "minor":
+            minor += 1
+            patch = 0
+        elif bump == "patch":
+            patch += 1
+        version = f"v{major}.{minor}.{patch}"
+
+    updated, count_version = re.subn(
+        r'APP_VERSION = "[^"]+"', f'APP_VERSION = "{version}"', source, count=1
     )
-    source_path.write_text(source, encoding="utf-8")
+    if count_version != 1:
+        print(
+            "update_build_version: version markers not found "
+            f"(APP_VERSION={count_version}); "
+            "skipping source rewrite."
+        )
+        return
+
+    new_bytes = updated.encode("utf-8")
+    if new_bytes == original_bytes:
+        return
+
+    directory = source_path.resolve().parent
+    fd, tmp_name = tempfile.mkstemp(dir=str(directory), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "wb") as tmp_file:
+            tmp_file.write(new_bytes)
+            tmp_file.flush()
+            os.fsync(tmp_file.fileno())
+        os.replace(tmp_name, str(source_path))
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
 
 
 update_build_version()

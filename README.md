@@ -94,7 +94,13 @@ python -m venv .venv
 .\build_exe.ps1
 ```
 
-ビルドすると、`dist\ItsumonoKaigyoForExcel.exe` が生成されます。ビルド時にアプリ内のバージョン情報も更新されます。
+ビルドすると、`dist\ItsumonoKaigyoForExcel.exe` が生成されます。
+ビルド時に `APP_VERSION` が自動更新されます。既定では patch が 1 つ上がります。
+現在のバージョン番号のままビルドする場合は、次のように実行します。
+
+```powershell
+.\build_exe.ps1 -VersionBump none
+```
 
 ## 主なファイル
 
